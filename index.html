@@ -1,58 +1,566 @@
-<!-- BEGIN (write your solution here) -->
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Заголовок</title>
-   <link rel="stylesheet" type="text/css" href="style.css">
+<style type="text/css">
+	img{width:50px; display: block;position: absolute;top:0;left: 0;}
+	div{position: absolute; width: 50px; height: 50px;}
+	.highlight{background-color: red !important;}
+	#G4{background-color: red;}
+</style>
 </head>
-    <body>
-        <div id='header'>
+<body>
+	<div id ='table'>
+	</div>
+<script type="text/javascript">
 
-             <h1>Имя<br>Фамилия</h1>
-             <h3>Специальность</h3>
-            <p>
-                <a href="https://ru.hexlet.io/courses/html/lessons/grouping/exercise_unit#">email</a>
-                <a href="https://ru.hexlet.io/courses/html/lessons/grouping/exercise_unit#">Ссылка на вк</a>
-             </p> 
-        </div>
-        
-        <div id='main'>
-            Короткий опциональный текст.
-            <div>
-                <h2>Опыт работы</h2>
-                <ol>
-                    <li>Привет</li>
-                    <li>tere</li>
-                    <li>hallow</li>
-                </ol>
-            </div>
 
-            <div>
-                <h2>Образование</h2>
-                <ol>
-                    <li>Привет</li>
-                    <li>tere</li>
-                    <li>hallow</li>
-                </ol>
-            </div>
+/* very global */
+test = () => alert('test');
+print = (x) => console.log(x);
 
-            <div>
-                <h2>Другие навыки и увлечения</h2>
-                <ol>
-                    <li>Привет</li>
-                    <li>tere</li>
-                    <li>hallow</li>
-                </ol>
-            </div>
+changeMove = () => {nowMoves = !nowMoves;}
+var nowMoves = 0; // 0 == white, 1 == black
+var activeFigure = {};
+//activeFigure.chessColor = 'w';
+var graveyard = [];
+	
+function getColumnNumber(value){
+	var columns = {'A':1, 'B':2, 'C':3, 'D':4, 'E':5, 'F':6, 'G':7, 'H':8};
 
-        </div>
-        <div id='footer'> 
-            <p>
-                имя, адрес, телефон и email.
-            </p>
-        </div>
+	if (value == +value){
+		for(var key in columns){
+			if(columns[key] == value){
+				return key;
+			}
+		}
+	} else{
+		return columns[value];
+	}
 
-    </body>
+}
+/* proto */
+function Chessman(type, color, column, row){
+	this.chessType = type;
+	this.chessColor = color;
+	this.chessColumn = column;
+	this.chessRow = row;
+	this.imagePath = `Pics/${this.chessType}_${this.chessColor}.png`;
+
+	if(this.chessType == 'pawn' || this.chessType =='king' || this.chessType == 'rook'){
+		this.isFirstMove = true;
+	}
+}
+
+Chessman.prototype.create = function(){
+	var colN = getColumnNumber(this.chessColumn); // a=1, c=3 ...
+	var pos = this.chessColumn + this.chessRow;
+	var image = document.createElement("img");
+	image.setAttribute("src", this.imagePath);
+	image.setAttribute("alt", this.chessType+'_'+this.chessColor);
+	image.addEventListener("click", chessClick.bind(this), false);
+	// image.addEventListener("mouseover", hlMe.bind(this), false);
+	document.getElementById(pos).appendChild(image);
+}
+
+function hlMe(){
+	if(nowMoves && this.chessColor == 'b' || !nowMoves && this.chessColor == 'w'){
+		var div = document.getElementById(this.chessColumn+this.chessRow)
+		div.style.backgroundColor = 'black';
+	}
+}
+
+/* onload */
+
+function createBoard(){
+	var fields = [];
+	var letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+	for(var i=1; i<=8; i++){
+		for(var j=0; j<8; j++){
+			var f = letters[j]+i;
+			fields.push(f);
+		}
+	}
+	// odd
+	for(var i=0; i<4; i++){
+		for(j=0; j<4; j++){
+			document.body.innerHTML+=
+			`<div style="left:${j*100}px; top:${i*100}px; 
+			background-color:rgb(44,40,40)";	
+			float:left;
+			id='${fields[j*2 + i*16]}'></div>`;
+			document.body.innerHTML+=
+			`<div style="left:${j*100+50}px; top:${i*100}px; 
+			background-color:rgb(120,120,120)";
+			float:left;
+			id='${fields[j*2 + i*16 + 1]}'></div>`;
+		}
+	}
+	// even
+	for(var i=0; i<4; i++){
+		for(j=0; j<4; j++){
+			document.body.innerHTML+=
+			`<div style="left:${j*100}px; top:${i*100+50}px; 
+			background-color:rgb(120,120,120)";	
+			float:left;
+			id='${fields[j*2 + i*16 + 8]}'></div>`;
+			document.body.innerHTML+=
+			`<div style="left:${j*100+50}px; top:${i*100+50}px; 
+			background-color:rgb(44,40,40);"
+			float:left;
+			id='${fields[j*2 + i*16 + 8 + 1]}'></div>`;
+		}
+	}
+}
+
+
+function startGame(){
+	figureTypes=["pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", 
+						"rook", "knight", "bishop", "king", "queen", "bishop", "knight", "rook"];
+ 	figurePos_white=["A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", 
+ 							"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1"];
+ 	figurePos_black=["A7", "B7", "C7", "D7", "E7", "F7", "G7", "H7", 
+ 							"A8", "B8", "C8", "D8", "E8", "F8", "G8", "H8"];
+	colors=["b", "w"];
+	figures=[];
+	// white
+	for(var i=0; i<figureTypes.length; i++){
+ 		figures[i]=new Chessman(figureTypes[i], 
+ 								colors[1], 
+ 								figurePos_white[i].charAt(0),	// column
+ 								figurePos_white[i].charAt(1));	// row
+ 		figures[i].create();
+ 	}
+ 	// black
+	for(var i=figureTypes.length; i<figureTypes.length*2; i++){
+ 		figures[i]=new Chessman(figureTypes[i-figureTypes.length], 
+ 								colors[0], 
+ 								figurePos_black[i-figureTypes.length].charAt(0),	// column
+ 								figurePos_black[i-figureTypes.length].charAt(1));	// row
+ 		figures[i].create();
+ 	}
+ 	addEL();
+}
+
+function addEL(ids, figure){
+	var divs = (document.getElementsByTagName('div'));
+	for(var i=1; i<divs.length; i++){
+		divs[i].addEventListener('click', moveMe.bind(this, divs[i].id));
+	}
+}
+
+/* myaso */
+
+function isMyMove(color){
+	return ((color == 'w' && nowMoves == 0) || (color == 'b' && nowMoves == 1))
+}
+
+function chessClick(){
+	var div = document.getElementById(this.chessColumn + this.chessRow);
+	if(isMyMove(this.chessColor)){
+		removeHighlights();
+		activeFigure = this;
+	} 
+
+	if(div.classList.contains('highlight')){
+		if(this.chessColor != activeFigure.chessColor){
+			//eatFigure(this.chess)
+		}
+	}else{		
+		showMoves.apply(this);
+	}
+}
+
+
+function showMoves(){
+	removeHighlights();
+	if(isMyMove(this.chessColor)){
+		var validMoves = getMovesForFigure.apply(this);
+		showHighlights(validMoves);
+		activeFigure = this;
+	}
+}
+
+
+function showHighlights(ids){
+	for(var i=0; i<ids.length; i++){
+		var id = ids[i];
+		if(document.getElementById(id)){
+			if(!document.getElementById(id).classList.contains('highlight')){
+				document.getElementById(id).classList.add('highlight');
+			}
+		}
+	}
+}
+
+function removeHighlights(){
+	var divs = document.getElementsByTagName('div');
+	for(var i=1; i<divs.length; i++){
+		divs[i].classList = '';
+	}
+}
+
+
+function moveMe(sender_id){
+	var div = document.getElementById(sender_id);
+	if(div.innerHTML == 0 && div.classList.contains('highlight')){
+		document.getElementById(activeFigure.chessColumn + activeFigure.chessRow).innerHTML = null;
+		activeFigure.chessColumn = sender_id[0];
+		activeFigure.chessRow = sender_id[1];
+		activeFigure.create();
+		if(activeFigure.isFirstMove) activeFigure.isFirstMove = false;
+		removeHighlights();
+		changeMove();
+	}
+	else if(div.innerHTML != 0 && div.classList.contains('highlight')){
+		figures.forEach(f => {
+			if(f.chessColumn == div.id[0]){
+				if(f.chessRow == div.id[1]){
+					if(f.chessColor != activeFigure.chessColor){
+						eatFigure(f);
+					}
+				}
+			}
+		});
+
+	}
+}
+
+
+function eatFigure(eaten){
+	// kill
+	var div = document.getElementById(eaten.chessColumn + eaten.chessRow);
+	div.innerHTML = null;
+	var index = figures.indexOf(eaten);
+	figures.splice(index, 1);
+	graveyard.push(eaten);
+	// replace
+	document.getElementById(activeFigure.chessColumn + activeFigure.chessRow).innerHTML = null;
+	activeFigure.chessColumn = div.id[0];
+	activeFigure.chessRow = div.id[1];
+	activeFigure.create();
+	removeHighlights();
+	changeMove();
+
+}
+
+
+function getMovesForFigure(){
+	console.log(this.chessType)
+	switch(this.chessType){
+		case 'pawn':
+			return getMoves_pawn.apply(this);
+		case 'rook':
+			return getMoves_rook.apply(this);
+		case 'knight':
+			return getMoves_knight.apply(this);
+		case 'bishop':
+			return getMoves_bishop.apply(this);
+		case 'queen':
+			return getMoves_queen.apply(this);
+		case 'king':
+			return getMoves_king.apply(this);
+	}
+}
+
+
+function getMoves_pawn(){
+	var toEat = [];
+	var toWalk = [];
+	var direction = (this.chessColor == 'w') ? 1 : -1;
+
+	toWalk.push(this.chessColumn + (+this.chessRow + 1*direction));
+	if(this.isFirstMove){
+		toWalk.push(this.chessColumn + (+this.chessRow + 2*direction));
+	}
+
+	var eat1 = +getColumnNumber(this.chessColumn) + 1;
+	var eat2 = +getColumnNumber(this.chessColumn) - 1;
+	eat1 = getColumnNumber(eat1);
+	eat2 = getColumnNumber(eat2);
+	eat1 += +this.chessRow + 1 * direction;
+	eat2 += +this.chessRow + 1 * direction;
+	toEat.push(eat1);
+	toEat.push(eat2);
+
+	return filter(toWalk, toEat);
+
+
+	function filter(walk, eat){
+			/*	exists	*/
+		for(var i=0; i<walk.length; i++){
+			if(!document.getElementById(walk[i])){
+				walk.splice(i,1);
+				i--;
+			}
+		}
+		for(var i=0; i<eat.length; i++){
+			if(!document.getElementById(eat[i])){
+				eat.splice(i,1);
+				i--;
+			}
+		}
+			/*	free	*/
+		for(var i=0; i<walk.length; i++){
+			if(document.getElementById(walk[i]).childNodes.length != 0){
+				walk.splice(i, 1);
+				i--;
+			}
+		}
+		for(var i =0; i<eat.length; i++){
+			if(document.getElementById(eat[i]).childNodes.length == 0){
+				eat.splice(i, 1);
+				i--;
+			}
+		}
+
+			/*	ally	*/
+		for(var i=0; i<eat.length; i++){
+			let id = eat[i];
+				for(var fig of figures){
+					if((fig.chessColumn + fig.chessRow == id) && (fig.chessColor == activeFigure.chessColor)){
+						eat.splice(i, 1);
+						i--;
+					}
+				}
+		}
+
+		var moves = eat.concat(walk);
+		return moves;
+	}
+}
+
+function getMoves_rook(){
+	var allMoves = [];
+	var validMoves = [];
+	var colN = +getColumnNumber(this.chessColumn);
+	var rowN = +this.chessRow;
+
+	var toRight = [];
+	for(var i=colN+1; i<=8; i++){
+		let id = getColumnNumber(i) + this.chessRow;
+		if(isAlly(id)) break;
+		if(isEnemy(id)){
+			toRight.push(id);
+			break;
+		}
+		toRight.push(id);
+	}	
+	var toLeft = [];
+	for(var i=colN-1; i>=1; i--){
+		let id = getColumnNumber(i) + this.chessRow;
+		if (isAlly(id)) break;
+		if(isEnemy(id)){
+			toLeft.push(id);
+			break;
+		}
+		toLeft.push(id);
+	}
+	var toUp = [];
+	for(var i=rowN-1; i>=1; i--){
+		let id = this.chessColumn + i;
+		if(isAlly(id)) break;
+		if(isEnemy(id)){
+			toUp.push(id);
+			break;
+		}
+		toUp.push(id);
+	}
+
+	var toDown = [];
+	for(var i=rowN+1; i<=8; i++){
+		let id = this.chessColumn + i;
+		if(isAlly(id)) break;
+		if(isEnemy(id)){
+			toDown.push(id);
+			break;
+		}
+		toDown.push(id);
+	}
+
+	validMoves = validMoves.concat(toRight);
+	validMoves = validMoves.concat(toLeft);
+	validMoves = validMoves.concat(toDown);
+	validMoves = validMoves.concat(toUp);
+
+	return validMoves;
+
+
+
+}
+
+function getMoves_bishop(){
+	var validMoves = [];
+	
+	// down right
+	var colN = +getColumnNumber(this.chessColumn);
+	var rowN = +this.chessRow;
+	var downRight = [];
+	for(var i=0; i<=8; i++){
+		colN++; rowN++;
+		let id = getColumnNumber(colN);
+		id += rowN;
+		if(colN < 0 || colN > 8 || rowN < 0 || rowN > 8) break;
+		if(isAlly(id)) break;
+		if(isEnemy(id)){ downRight.push(id); break;}
+		downRight.push(id);
+	}
+	// down left
+	var colN = +getColumnNumber(this.chessColumn);
+	var rowN = +this.chessRow;
+	var downLeft = [];
+	for(var i=0; i<=8; i++){
+		colN--; rowN++;
+		let id = getColumnNumber(colN);
+		id += rowN;
+		if(colN < 0 || colN > 8 || rowN < 0 || rowN > 8) break;
+		if(isAlly(id)) break;
+		if(isEnemy(id)){ downLeft.push(id); break;}
+		downLeft.push(id);
+	}
+	//up right
+	var colN = +getColumnNumber(this.chessColumn);
+	var rowN = +this.chessRow;
+	var upRight = [];
+	for(var i=0; i<=8; i++){
+		colN++; rowN--;
+		let id = getColumnNumber(colN);
+		id += rowN;
+		if(colN < 0 || colN > 8 || rowN < 0 || rowN > 8) break;
+		if(isAlly(id)) break;
+		if(isEnemy(id)){ upRight.push(id); break;}
+		downLeft.push(id);
+	}
+	// up left
+	var colN = +getColumnNumber(this.chessColumn);
+	var rowN = +this.chessRow;
+	var upLeft = [];
+	for(var i=0; i<=8; i++){
+		colN--; rowN--;
+		let id = getColumnNumber(colN);
+		id += rowN;
+		if(colN < 0 || colN > 8 || rowN < 0 || rowN > 8) break;
+		if(isAlly(id)) break;
+		if(isEnemy(id)){ upLeft.push(id); break;}
+		downLeft.push(id);
+	}
+	validMoves = validMoves.concat(downRight);
+	validMoves = validMoves.concat(downLeft);
+	validMoves = validMoves.concat(upRight);
+	validMoves = validMoves.concat(upLeft);
+	print(validMoves);
+
+	return validMoves;
+}
+
+function getMoves_knight(){
+	var validMoves = [];
+	var colN = +getColumnNumber(this.chessColumn);
+	var rowN = +this.chessRow;
+	var id;
+
+	id = getColumnNumber(colN+2) + (rowN+1);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN+2) + (rowN-1);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN-2) + (rowN+1);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN-2) + (rowN-1);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN-1) + (rowN+2);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN-1) + (rowN-2);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN+2) + (rowN-1);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN+1) + (rowN+2);
+		if (!isAlly(id)) validMoves.push(id);
+	id = getColumnNumber(colN+1) + (rowN-2);
+		if (!isAlly(id)) validMoves.push(id);
+
+	return validMoves;
+}
+
+function getMoves_queen(){
+	var validMoves = getMoves_rook.apply(this);
+	validMoves = validMoves.concat(getMoves_bishop.apply(this));
+	return validMoves;
+}
+
+function getMoves_king(){
+	var validMoves = [];
+	var colN = +getColumnNumber(this.chessColumn);
+	var rowN = +this.chessRow;
+	var id;
+
+	id = (getColumnNumber(colN) + (rowN+1));
+		if (!isAlly(id)) validMoves.push(id);
+	id = (getColumnNumber(colN) + (rowN-1));
+		if (!isAlly(id)) validMoves.push(id);
+	id = (getColumnNumber(colN+1) + (rowN));
+		if (!isAlly(id)) validMoves.push(id);
+	id = (getColumnNumber(colN-1) + (rowN));
+		if (!isAlly(id)) validMoves.push(id);
+	id = (getColumnNumber(colN+1) + (rowN+1));
+		if (!isAlly(id)) validMoves.push(id);
+	id = (getColumnNumber(colN+1) + (rowN-1));
+		if (!isAlly(id)) validMoves.push(id);
+	id = (getColumnNumber(colN-1) + (rowN+1));
+		if (!isAlly(id)) validMoves.push(id);
+	id = (getColumnNumber(colN-1) + (rowN-1));
+		if (!isAlly(id)) validMoves.push(id);
+
+	return validMoves;
+	
+}
+
+
+function isAlly(id){
+	for(var i=0; i<figures.length; i++){
+		let f = figures[i];
+		if(f.chessColumn == id[0] && f.chessRow == id[1]){
+			if(f.chessColor == activeFigure.chessColor){
+				return 1;
+			}
+		}
+	}
+}
+function isEnemy(id){
+	for(var i=0; i<figures.length; i++){
+		let f = figures[i];
+		if(f.chessColumn == id[0] && f.chessRow == id[1]){
+			if(f.chessColor != activeFigure.chessColor){
+				return 1;
+			}
+		}
+	}
+}
+
+/*
+		TODO:
+Pawn:
+Move
+Eat
+	Rook:
+		- Move
+		Change
+Knight:
+Move
+Bishop:
+Move
+	King:
+		Move
+		Change
+Queen:
+Move
+	Ressurect
+	Shah
+	Mat
+
+*/
+
+createBoard();
+startGame();
+
+</script>
+</body>
 </html>
-<!-- END -->
